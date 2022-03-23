@@ -1,0 +1,6 @@
+ARG  FEDORA_VERSION=latest
+FROM fedora:${FEDORA_VERSION}
+RUN  dnf -y update \
+  && dnf -y install libgpiod-utils python3-libgpiod \
+  && dnf clean all \
+  && rm -rf /var/cache/yum
