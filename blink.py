@@ -3,6 +3,15 @@ import sys
 import time
 import os
 
+import drivers
+
+# Load the driver and set it to "display"
+# If you use something from the driver library use the "display." prefix first
+display = drivers.Lcd()
+
+display.lcd_display_string("Hi Microshift!", 1)  # Write line of text to first line of display
+display.lcd_display_string("Muon (C)", 4)  # Write line of text to second line of display
+
 if "LED_CHIP" in os.environ and "LED_LINE_OFFSET" in os.environ:
     pass
 else:
@@ -20,20 +29,28 @@ try:
 except ValueError:
     print('''LED_CHIP AND LED_LINE_OFFSET SHOUD BE INTEGERS''')
 
-chip=gpiod.Chip(LED_CHIP)
+chip = gpiod.chip(LED_CHIP)
+led = chip.get_line(LED_LINE_OFFSET)
 
-lines = chip.get_lines([ LED_LINE_OFFSET ])
-lines.request(consumer='blink', type=gpiod.LINE_REQ_DIR_OUT, default_vals=[ 0 ])
+config = gpiod.line_request()
+config.consumer = "blink"
+config.request_type = gpiod.line_request.DIRECTION_OUTPUT
+
+led.request(config)
 
 try:
     while True:
-        lines.set_values([ 1 ])
+        led.set_value(0)
+        display.lcd_display_string("LED OFF             ", 2)
         time.sleep(1)
-        lines.set_values([ 0 ])
-        time.sleep(1)
+        led.set_value(1)
+        display.lcd_display_string("LED ON              ", 2)
+        time.sleep(1)     
 except KeyboardInterrupt:
     print("Shutdown requested...exiting")
+    display.lcd_clear()
+    display.lcd_display_string("Bye Human!", 1)  
 except Exception:
     traceback.print_exc(file=sys.stdout)
-lines.set_values([ 0 ])
+led.set_value(0)
 sys.exit(0)
